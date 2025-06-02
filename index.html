@@ -38,6 +38,10 @@
                 transform: translateY(0);
             }
         }
+        .logo{
+            width:100px;
+            height: 100%;
+        }
 
         .header {
             background: linear-gradient(135deg, #ff6b6b, #ee5a52);
@@ -226,6 +230,7 @@
 <body>
     <div class="container">
         <div class="header">
+            <img src="logo rs.png" alt="logo" class="logo">
             <h1>📸 Free Photoshoot Registration – Palakol</h1>
             <p>8th June 2025 (Sunday)</p>
         </div>
@@ -239,6 +244,8 @@
                     <div class="info-item">📅 <strong>Date:</strong> 8th June 2025</div>
                     <div class="info-item">🕒 <strong>Duration:</strong> 15 minutes per person</div>
                     <div class="info-item">📸 <strong>Includes:</strong> 2 edited digital photos</div>
+                    <div class="info-item">☎ <strong>contact:</strong>8309824588</div>
+                    <div class="info-item">☎ <strong>contact:</strong>89858 38097</div>
                 </div>
                 
                 <p style="margin-top: 15px;"><strong>🔔 Limited slots only – Fill in your details below. I'll confirm your time slot via WhatsApp.</strong></p>
@@ -371,11 +378,11 @@ Event Details:
             `.trim();
 
             // Method 1: mailto (opens default email client)
-            const mailtoLink = `mailto:chinninovahu@gmail.com?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+            const mailtoLink = `mailto:mandrurabbyson@gmail.com?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
             
             // Method 2: Try FormSubmit service (free email forwarding)
             const formSubmitData = new FormData();
-            formSubmitData.append('_to', 'chinninovahu@gmail.com');
+            formSubmitData.append('_to', 'mandrurabbyson@gmail.com');
             formSubmitData.append('_subject', emailSubject);
             formSubmitData.append('_template', 'table');
             formSubmitData.append('Full Name', data.fullName);
@@ -386,7 +393,7 @@ Event Details:
             formSubmitData.append('Registration Time', data.timestamp);
 
             // Try FormSubmit first
-            fetch('https://formsubmit.co/chinninovahu@gmail.com', {
+            fetch('https://formsubmit.co/mandrurabbyson@gmail.com', {
                 method: 'POST',
                 body: formSubmitData
             })
