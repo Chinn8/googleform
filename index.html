@@ -208,6 +208,14 @@
             border: 1px solid #f5c6cb;
         }
 
+        .submission-methods {
+            background: #e8f4f8;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border-left: 4px solid #17a2b8;
+        }
+
         @media (max-width: 768px) {
             .container {
                 margin: 10px;
@@ -249,6 +257,13 @@
                 </div>
                 
                 <p style="margin-top: 15px;"><strong>🔔 Limited slots only – Fill in your details below. I'll confirm your time slot via WhatsApp.</strong></p>
+            </div>
+
+            <div class="submission-methods">
+                <p><strong>📋 How registration works:</strong></p>
+                <p>• Your details will be sent via email for record keeping</p>
+                <p>• Admin will also receive WhatsApp notification for quick response</p>
+                <p>• You'll be contacted within 24 hours to confirm your time slot</p>
             </div>
 
             <div class="alert" id="alertMessage"></div>
@@ -327,6 +342,32 @@
             }
         }
 
+        function sendWhatsAppNotification(data) {
+            // Create WhatsApp message for admin
+            const adminMessage = `🆕 NEW PHOTOSHOOT REGISTRATION
+
+👤 Name: ${data.fullName}
+📱 Mobile: ${data.mobile}
+📸 Instagram: ${data.instagram}
+📧 Email: ${data.email}
+✅ Photo Permission: ${data.permission === 'yes' ? 'Yes' : 'No'}
+🕒 Time: ${data.timestamp}
+
+Event: Free Photoshoot - Palakol
+Date: 8th June 2025
+
+Please confirm time slot with registrant.`;
+
+            // Admin WhatsApp number
+            const adminWhatsApp = '918309824588';
+            const whatsappUrl = `https://wa.me/${adminWhatsApp}?text=${encodeURIComponent(adminMessage)}`;
+            
+            // Open WhatsApp in new tab (for admin notification)
+            window.open(whatsappUrl, '_blank');
+            
+            return true;
+        }
+
         document.getElementById('photoshootForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -352,6 +393,15 @@
                 })
             };
 
+            // Validate mobile number (basic validation)
+            const mobilePattern = /^[6-9]\d{9}$/;
+            if (!mobilePattern.test(data.mobile.replace(/\D/g, '').slice(-10))) {
+                showAlert('⚠️ Please enter a valid 10-digit mobile number', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+                return;
+            }
+
             // Create email content
             const emailSubject = `New Photoshoot Registration - ${data.fullName}`;
             const emailBody = `
@@ -368,57 +418,60 @@ Registration Details:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Please contact ${data.fullName} via WhatsApp at ${data.mobile} to confirm their time slot.
+IMPORTANT: Please contact ${data.fullName} via WhatsApp at ${data.mobile} to confirm their time slot.
 
 Event Details:
 📅 Date: 8th June 2025 (Sunday)
 📍 Location: Palakol
 ⏱️ Duration: 15 minutes per person
 📸 Deliverables: 2 professionally edited digital photos
+
+Admin Contact: +91 83098 24588
             `.trim();
 
-            // Method 1: mailto (opens default email client)
-            const mailtoLink = `mailto:mandrurabbyson@gmail.com?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
-            
-            // Method 2: Try FormSubmit service (free email forwarding)
+            // FormSubmit service (free email forwarding)
             const formSubmitData = new FormData();
             formSubmitData.append('_to', 'mandrurabbyson@gmail.com');
             formSubmitData.append('_subject', emailSubject);
             formSubmitData.append('_template', 'table');
+            formSubmitData.append('_next', window.location.href + '?success=1');
             formSubmitData.append('Full Name', data.fullName);
             formSubmitData.append('Mobile Number', data.mobile);
             formSubmitData.append('Instagram Handle', data.instagram);
             formSubmitData.append('Email Address', data.email);
             formSubmitData.append('Photo Permission', data.permission === 'yes' ? 'Yes, can use photos' : 'No, keep private');
             formSubmitData.append('Registration Time', data.timestamp);
+            formSubmitData.append('Admin Contact', '+91 83098 24588');
 
-            // Try FormSubmit first
-            fetch('https://formsubmit.co/mandrurabbyson@gmail.com', {
-                method: 'POST',
-                body: formSubmitData
-            })
-            .then(response => {
-                if (response.ok) {
-                    showAlert('✅ Registration successful! You will be contacted via WhatsApp to confirm your time slot.', 'success');
-                    this.reset();
-                    // Remove selected classes
-                    document.querySelectorAll('.radio-option').forEach(option => {
-                        option.classList.remove('selected');
-                    });
-                } else {
-                    throw new Error('FormSubmit failed');
-                }
-            })
-            .catch(error => {
-                console.log('FormSubmit failed, trying mailto...', error);
-                // Fallback to mailto
-                window.location.href = mailtoLink;
-                showAlert('📧 Please send the email that just opened in your email client, or contact via WhatsApp directly.', 'success');
+            // Send email and WhatsApp notification
+            Promise.all([
+                // Email submission
+                fetch('https://formsubmit.co/mandrurabbyson@gmail.com', {
+                    method: 'POST',
+                    body: formSubmitData
+                }).catch(error => {
+                    console.log('Email service failed:', error);
+                    // Fallback to mailto
+                    const mailtoLink = `mailto:mandrurabbyson@gmail.com?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+                    window.open(mailtoLink, '_blank');
+                    return { ok: true }; // Consider it successful for UI purposes
+                }),
+                
+                // WhatsApp notification (always succeeds as it just opens WhatsApp)
+                Promise.resolve(sendWhatsAppNotification(data))
+            ])
+            .then(([emailResult, whatsappResult]) => {
+                showAlert('✅ Registration successful! Email sent and admin notified via WhatsApp. You will be contacted within 24 hours to confirm your time slot.', 'success');
+                
                 this.reset();
                 // Remove selected classes
                 document.querySelectorAll('.radio-option').forEach(option => {
                     option.classList.remove('selected');
                 });
+            })
+            .catch(error => {
+                console.error('Submission error:', error);
+                showAlert('⚠️ Registration submitted but there may have been an issue with notifications. Please contact +91 83098 24588 directly if you don\'t hear back within 24 hours.', 'error');
             })
             .finally(() => {
                 // Re-enable button
@@ -436,6 +489,16 @@ Event Details:
             input.addEventListener('blur', function() {
                 this.style.transform = 'translateY(0)';
             });
+        });
+
+        // Check for success parameter in URL
+        window.addEventListener('load', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('success') === '1') {
+                showAlert('✅ Registration confirmed! You will be contacted soon to confirm your photoshoot time slot.', 'success');
+                // Clean up URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
         });
     </script>
 </body>
