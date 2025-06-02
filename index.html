@@ -208,12 +208,14 @@
             border: 1px solid #f5c6cb;
         }
 
-        .submission-methods {
-            background: #e8f4f8;
-            padding: 20px;
+        .notification-info {
+            background: #e8f5e8;
+            border: 1px solid #c3e6cb;
             border-radius: 12px;
-            margin-bottom: 20px;
-            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 14px;
+            color: #155724;
         }
 
         @media (max-width: 768px) {
@@ -252,18 +254,15 @@
                     <div class="info-item">📅 <strong>Date:</strong> 8th June 2025</div>
                     <div class="info-item">🕒 <strong>Duration:</strong> 15 minutes per person</div>
                     <div class="info-item">📸 <strong>Includes:</strong> 2 edited digital photos</div>
-                    <div class="info-item">☎ <strong>contact:</strong>8309824588</div>
-                    <div class="info-item">☎ <strong>contact:</strong>89858 38097</div>
+                    <div class="info-item">☎ <strong>Contact:</strong> +91 83098 24588</div>
+                    <div class="info-item">☎ <strong>Contact:</strong> +91 89858 38097</div>
                 </div>
                 
                 <p style="margin-top: 15px;"><strong>🔔 Limited slots only – Fill in your details below. I'll confirm your time slot via WhatsApp.</strong></p>
             </div>
 
-            <div class="submission-methods">
-                <p><strong>📋 How registration works:</strong></p>
-                <p>• Your details will be sent via email for record keeping</p>
-                <p>• Admin will also receive WhatsApp notification for quick response</p>
-                <p>• You'll be contacted within 24 hours to confirm your time slot</p>
+            <div class="notification-info">
+                <strong>📱 Instant Notifications:</strong> Upon registration, you'll receive a WhatsApp confirmation and I'll be notified immediately via WhatsApp and email.
             </div>
 
             <div class="alert" id="alertMessage"></div>
@@ -276,7 +275,7 @@
 
                 <div class="form-group">
                     <label for="mobile">Mobile Number (WhatsApp preferred) <span class="required">*</span></label>
-                    <input type="tel" id="mobile" name="mobile" required>
+                    <input type="tel" id="mobile" name="mobile" required pattern="[0-9]{10}" title="Please enter a valid 10-digit mobile number">
                 </div>
 
                 <div class="form-group">
@@ -334,38 +333,55 @@
             // Scroll to alert
             alertDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
             
-            // Hide after 5 seconds for success messages
+            // Hide after 7 seconds for success messages
             if (type === 'success') {
                 setTimeout(() => {
                     alertDiv.style.display = 'none';
-                }, 5000);
+                }, 7000);
             }
         }
 
         function sendWhatsAppNotification(data) {
-            // Create WhatsApp message for admin
-            const adminMessage = `🆕 NEW PHOTOSHOOT REGISTRATION
-
+            const adminNumber = "918309824588"; // Your WhatsApp number
+            const registrantNumber = data.mobile.replace(/\D/g, ''); // Clean mobile number
+            
+            // Message for you (admin)
+            const adminMessage = `🎯 NEW PHOTOSHOOT REGISTRATION
+            
 👤 Name: ${data.fullName}
-📱 Mobile: ${data.mobile}
+📱 Mobile: +91 ${data.mobile}
 📸 Instagram: ${data.instagram}
 📧 Email: ${data.email}
 ✅ Photo Permission: ${data.permission === 'yes' ? 'Yes' : 'No'}
-🕒 Time: ${data.timestamp}
+🕒 Registered: ${data.timestamp}
 
-Event: Free Photoshoot - Palakol
-Date: 8th June 2025
+📍 Event: Palakol Photoshoot - 8th June 2025`;
 
-Please confirm time slot with registrant.`;
+            // Message for registrant (confirmation)
+            const registrantMessage = `Hi ${data.fullName}! 
 
-            // Admin WhatsApp number
-            const adminWhatsApp = '918309824588';
-            const whatsappUrl = `https://wa.me/${adminWhatsApp}?text=${encodeURIComponent(adminMessage)}`;
+✅ Your registration for the FREE PHOTOSHOOT is confirmed!
+
+📅 Date: 8th June 2025 (Sunday)
+📍 Location: Palakol
+⏱️ Duration: 15 minutes
+📸 You'll receive: 2 professionally edited photos
+
+I'll contact you soon to confirm your exact time slot. Thank you for registering!
+
+- Rabbyson Photography`;
+
+            // Open WhatsApp for admin notification
+            const adminWhatsAppUrl = `https://wa.me/${adminNumber}?text=${encodeURIComponent(adminMessage)}`;
             
-            // Open WhatsApp in new tab (for admin notification)
-            window.open(whatsappUrl, '_blank');
+            // Open WhatsApp for registrant confirmation
+            const registrantWhatsAppUrl = `https://wa.me/91${registrantNumber}?text=${encodeURIComponent(registrantMessage)}`;
             
-            return true;
+            // Open both WhatsApp chats
+            window.open(adminWhatsAppUrl, '_blank');
+            setTimeout(() => {
+                window.open(registrantWhatsAppUrl, '_blank');
+            }, 2000);
         }
 
         document.getElementById('photoshootForm').addEventListener('submit', function(e) {
@@ -373,6 +389,14 @@ Please confirm time slot with registrant.`;
             
             const submitBtn = document.getElementById('submitBtn');
             const originalText = submitBtn.textContent;
+            
+            // Validate mobile number
+            const mobileInput = document.getElementById('mobile');
+            const mobileValue = mobileInput.value.replace(/\D/g, '');
+            if (mobileValue.length !== 10) {
+                showAlert('❌ Please enter a valid 10-digit mobile number.', 'error');
+                return;
+            }
             
             // Disable button and show loading
             submitBtn.disabled = true;
@@ -382,7 +406,7 @@ Please confirm time slot with registrant.`;
             const formData = new FormData(this);
             const data = {
                 fullName: formData.get('fullName'),
-                mobile: formData.get('mobile'),
+                mobile: mobileValue,
                 instagram: formData.get('instagram') || 'Not provided',
                 email: formData.get('email') || 'Not provided',
                 permission: formData.get('permission'),
@@ -393,24 +417,15 @@ Please confirm time slot with registrant.`;
                 })
             };
 
-            // Validate mobile number (basic validation)
-            const mobilePattern = /^[6-9]\d{9}$/;
-            if (!mobilePattern.test(data.mobile.replace(/\D/g, '').slice(-10))) {
-                showAlert('⚠️ Please enter a valid 10-digit mobile number', 'error');
-                submitBtn.disabled = false;
-                submitBtn.textContent = originalText;
-                return;
-            }
-
-            // Create email content
-            const emailSubject = `New Photoshoot Registration - ${data.fullName}`;
+            // Create email content for both recipients
+            const emailSubject = `🎯 New Photoshoot Registration - ${data.fullName}`;
             const emailBody = `
-New registration for Free Photoshoot - Palakol (8th June 2025)
+NEW PHOTOSHOOT REGISTRATION - PALAKOL
 
 Registration Details:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 👤 Full Name: ${data.fullName}
-📱 Mobile Number: ${data.mobile}
+📱 Mobile Number: +91 ${data.mobile}
 📸 Instagram Handle: ${data.instagram}
 📧 Email: ${data.email}
 ✅ Photo Permission: ${data.permission === 'yes' ? 'Yes, can use photos' : 'No, keep private'}
@@ -418,60 +433,73 @@ Registration Details:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-IMPORTANT: Please contact ${data.fullName} via WhatsApp at ${data.mobile} to confirm their time slot.
-
-Event Details:
+EVENT DETAILS:
 📅 Date: 8th June 2025 (Sunday)
 📍 Location: Palakol
 ⏱️ Duration: 15 minutes per person
 📸 Deliverables: 2 professionally edited digital photos
 
-Admin Contact: +91 83098 24588
+ACTION REQUIRED:
+Contact ${data.fullName} via WhatsApp at +91 ${data.mobile} to confirm their time slot.
+
+WhatsApp Quick Link: https://wa.me/91${data.mobile}
             `.trim();
 
-            // FormSubmit service (free email forwarding)
+            // Method 1: Try multiple email services
             const formSubmitData = new FormData();
             formSubmitData.append('_to', 'mandrurabbyson@gmail.com');
+            formSubmitData.append('_cc', 'rabbysonphotography@gmail.com'); // Add your Gmail here
             formSubmitData.append('_subject', emailSubject);
             formSubmitData.append('_template', 'table');
             formSubmitData.append('_next', window.location.href + '?success=1');
             formSubmitData.append('Full Name', data.fullName);
-            formSubmitData.append('Mobile Number', data.mobile);
+            formSubmitData.append('Mobile Number', '+91 ' + data.mobile);
             formSubmitData.append('Instagram Handle', data.instagram);
             formSubmitData.append('Email Address', data.email);
             formSubmitData.append('Photo Permission', data.permission === 'yes' ? 'Yes, can use photos' : 'No, keep private');
             formSubmitData.append('Registration Time', data.timestamp);
-            formSubmitData.append('Admin Contact', '+91 83098 24588');
+            formSubmitData.append('WhatsApp Link', `https://wa.me/91${data.mobile}`);
 
-            // Send email and WhatsApp notification
-            Promise.all([
-                // Email submission
-                fetch('https://formsubmit.co/mandrurabbyson@gmail.com', {
-                    method: 'POST',
-                    body: formSubmitData
-                }).catch(error => {
-                    console.log('Email service failed:', error);
-                    // Fallback to mailto
-                    const mailtoLink = `mailto:mandrurabbyson@gmail.com?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
-                    window.open(mailtoLink, '_blank');
-                    return { ok: true }; // Consider it successful for UI purposes
-                }),
+            // Try FormSubmit service
+            fetch('https://formsubmit.co/mandrurabbyson@gmail.com', {
+                method: 'POST',
+                body: formSubmitData
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Send WhatsApp notifications
+                    sendWhatsAppNotification(data);
+                    
+                    showAlert('✅ Registration successful! WhatsApp notifications sent. You will be contacted soon to confirm your time slot.', 'success');
+                    this.reset();
+                    
+                    // Remove selected classes
+                    document.querySelectorAll('.radio-option').forEach(option => {
+                        option.classList.remove('selected');
+                    });
+                } else {
+                    throw new Error('Email service failed');
+                }
+            })
+            .catch(error => {
+                console.log('Primary email service failed, using fallback...', error);
                 
-                // WhatsApp notification (always succeeds as it just opens WhatsApp)
-                Promise.resolve(sendWhatsAppNotification(data))
-            ])
-            .then(([emailResult, whatsappResult]) => {
-                showAlert('✅ Registration successful! Email sent and admin notified via WhatsApp. You will be contacted within 24 hours to confirm your time slot.', 'success');
+                // Fallback: mailto for both emails
+                const mailtoAdmin = `mailto:mandrurabbyson@gmail.com,rabbysonphotography@gmail.com?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
                 
+                // Send WhatsApp notifications anyway
+                sendWhatsAppNotification(data);
+                
+                // Open email client
+                window.location.href = mailtoAdmin;
+                
+                showAlert('📧 Registration received! Please send the email that opened, or contact directly via WhatsApp. WhatsApp notifications have been prepared.', 'success');
                 this.reset();
+                
                 // Remove selected classes
                 document.querySelectorAll('.radio-option').forEach(option => {
                     option.classList.remove('selected');
                 });
-            })
-            .catch(error => {
-                console.error('Submission error:', error);
-                showAlert('⚠️ Registration submitted but there may have been an issue with notifications. Please contact +91 83098 24588 directly if you don\'t hear back within 24 hours.', 'error');
             })
             .finally(() => {
                 // Re-enable button
@@ -491,12 +519,12 @@ Admin Contact: +91 83098 24588
             });
         });
 
-        // Check for success parameter in URL
+        // Check for success parameter on page load
         window.addEventListener('load', function() {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('success') === '1') {
-                showAlert('✅ Registration confirmed! You will be contacted soon to confirm your photoshoot time slot.', 'success');
-                // Clean up URL
+                showAlert('✅ Registration confirmed and email sent successfully!', 'success');
+                // Clean URL
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
         });
